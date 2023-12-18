@@ -125,16 +125,16 @@ jobs:
         name: ${{ matrix.artifact }}-unreal
         path: build/comp_unreal/
 
-    - name: Install PythonLib
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      run: cmake --install . --config $BUILD_TYPE --prefix comp_py --component unreal
+    # - name: Install PythonLib
+    #   working-directory: ${{github.workspace}}/build
+    #   shell: bash
+    #   run: cmake --install . --config $BUILD_TYPE --prefix comp_py --component py
 
-    - name: Upload Binary Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.artifact }}-py
-        path: build/comp_py/
+    # - name: Upload Binary Artifact
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: ${{ matrix.artifact }}-py
+    #     path: build/comp_py/
 
     # Make sure Inkproof has everything it needs to run our executable
     - name: Setup Ink Proof
