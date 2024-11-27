@@ -1,4 +1,5 @@
 list(APPEND SOURCES
+    binary_emitter.cpp binary_reader.cpp json_emitter.cpp reverse_compiler.cpp
     compiler.cpp binary_stream.h binary_stream.cpp json.hpp
     json_compiler.h json_compiler.cpp 
     emitter.h emitter.cpp

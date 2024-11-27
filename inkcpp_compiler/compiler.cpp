@@ -8,6 +8,9 @@
 
 #include "json_compiler.h"
 #include "binary_emitter.h"
+#include "binary_reader.h"
+#include "json_emitter.h"
+#include "reverse_compiler.h"
 
 #include <fstream>
 
@@ -92,5 +95,22 @@ namespace ink::compiler
 
 		// Close file
 		fout.close();
-	}
+  }
+
+  void reverse(const char* filenameIn, const char* filenameOut, compilation_results* results)
+  {
+	  std::ifstream in(filenameIn, std::ios::binary);
+	  std::ofstream out(filenameOut);
+	  reverse(in, out, results);
+  }
+
+  void reverse(std::istream& in, std::ostream& out, compilation_results* results)
+  {
+	  using namespace internal;
+	  binary_reader    reader(in);
+	  json_emitter     emitter(out);
+	  reverse_compiler compiler(reader, emitter, results);
+	  compiler.compile();
+  }
+
   } // namespace ink::compiler

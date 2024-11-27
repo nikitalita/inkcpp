@@ -40,5 +40,9 @@ namespace compiler
 
 	/** stream -> file */
 	void run(std::istream& in, const char* filenameOut, compilation_results* results = nullptr);
+
+	void reverse(const char* filenameIn, const char* filenameOut, compilation_results* results = nullptr);
+	void reverse(std::istream& in, std::ostream& out, compilation_results* results = nullptr);
+
 } // namespace compiler
 } // namespace ink
