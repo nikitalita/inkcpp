@@ -23,3 +23,6 @@ Bin/
 # Visual Studio
 /out/build/
 /.vs
+.cache/
+.idea/
+cmake-build-*/
