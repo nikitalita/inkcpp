@@ -35,6 +35,7 @@ SET(CMAKE_INSTALL_INCLUDE_DIR include)
 set(INKCPP_PY OFF CACHE BOOL "Build python bindings")
 set(WHEEL_BUILD OFF CACHE BOOL "Set for build wheel python lib (do not forgett INKCPP_PY")
 set(INKCPP_C OFF CACHE BOOL "Build c library")
+set(INKCPP_DECOMPILER ON CACHE BOOL "Build decompiler")
 set(INKCPP_TEST OFF CACHE BOOL "Build inkcpp tests (requires: inklecate in path / env: INKLECATE set / INKCPP_INKLECATE=OS or ALL)")
 set(INKCPP_INKLECATE "NONE" CACHE STRING "If inklecate should be downloaded automatically from the official release page. NONE -> No, OS -> Yes, but only for the current OS, ALL -> Yes, for all availible OSs")
 set_property(CACHE INKCPP_INKLECATE PROPERTY STRINGS "NONE" "OS" "ALL")
@@ -55,6 +56,9 @@ elseif(inkcpp_inklecate_upper STREQUAL "OS")
 	endif()
 endif()
 
+if (INKCPP_DECOMPILER)
+	add_subdirectory(inkcpp_decompiler)
+endif(INKCPP_DECOMPILER)
 if (INKCPP_PY)
 	add_compile_options(-fPIC)
 	add_subdirectory(inkcpp_py)
@@ -74,7 +78,7 @@ if (NOT WHEEL_BUILD)
 endif(NOT WHEEL_BUILD)
 
 
-install(TARGETS inkcpp inkcpp_shared inkcpp_compiler
+install(TARGETS inkcpp inkcpp_shared inkcpp_compiler inkcpp_decompiler
 	EXPORT inkcppTarget
 	ARCHIVE DESTINATION "lib/ink"
 	COMPONENT lib EXCLUDE_FROM_ALL

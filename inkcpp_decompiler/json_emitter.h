@@ -3,7 +3,7 @@
 #include "json.hpp"
 #include <ostream>
 
-namespace ink::compiler::internal
+namespace ink::decompiler::internal
 {
 class json_emitter
 {
@@ -19,4 +19,4 @@ private:
 	std::ostream&  _output;
 	nlohmann::json _json;
 };
-} // namespace ink::compiler::internal
+} // namespace ink::decompiler::internal

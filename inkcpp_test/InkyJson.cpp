@@ -4,6 +4,7 @@
 #include <globals.h>
 #include <runner.h>
 #include <compiler.h>
+#include <decompiler.h>
 
 using namespace ink::runtime;
 
@@ -32,7 +33,7 @@ SCENARIO("run inklecate 1.1.1 story")
 		// 	REQUIRE(thread->getall() == OUTPUT_PART_2);
 		// }
 		auto new_output_file = std::string(INK_TEST_RESOURCE_DIR "simple-1.1.1-") + compiler + "-reversed.json";
-		ink::compiler::reverse(output_file.c_str(), new_output_file.c_str());
+		ink::decompiler::reverse(output_file.c_str(), new_output_file.c_str());
 		THEN("Woop!")
 		{
 			REQUIRE(true);

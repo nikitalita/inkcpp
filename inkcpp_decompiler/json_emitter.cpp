@@ -1,6 +1,6 @@
 #include "json_emitter.h"
 
-namespace ink::compiler::internal
+namespace ink::decompiler::internal
 {
 json_emitter::json_emitter(std::ostream& output)
     : _output(output)
@@ -30,4 +30,4 @@ void json_emitter::write_container(const nlohmann::json& container)
 {
 	_json["root"].push_back(container);
 }
-} // namespace ink::compiler::internal
+} // namespace ink::decompiler::internal
