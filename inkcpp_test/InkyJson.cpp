@@ -15,6 +15,7 @@ static constexpr size_t CHOICE = 0;
 
 SCENARIO("run inklecate 1.1.1 story")
 {
+	// auto compiler = GENERATE("inklecate");
 	auto compiler = GENERATE("inklecate", "inky");
 	GIVEN(compiler)
 	{

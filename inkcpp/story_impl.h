@@ -33,6 +33,10 @@ namespace ink::runtime::internal
 		inline const ip_t instructions() const { return _instruction_data; }
 		inline const ip_t end() const { return _file + _length; }
 
+		inline const uint32_t* get_container_list(){return _container_list;}
+		inline const hash_t* get_container_hash_start(){return _container_hash_start;}
+		inline const hash_t* get_container_hash_end(){return _container_hash_end;}
+
 		inline uint32_t num_containers() const { return _num_containers; }
 
 		const list_flag* lists() const { return _lists; }
