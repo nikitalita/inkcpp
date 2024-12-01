@@ -10,6 +10,7 @@ set(SOURCES
     decompiler.cpp
     reverse_compiler.cpp
     json_emitter.cpp
+	instruction_reader.cpp
 )
 
 # Header files
@@ -17,6 +18,7 @@ set(HEADERS
     include/decompiler.h
     reverse_compiler.h
     json_emitter.h
+	instruction_reader.h
 )
 
 # Add the library

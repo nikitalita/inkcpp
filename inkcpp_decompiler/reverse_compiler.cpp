@@ -2,6 +2,7 @@
 #include "reverse_compiler.h"
 #include "command.h"
 #include "range_map/range_map.hpp"
+#include "instruction_reader.h"
 
 namespace ink::decompiler::internal
 {
@@ -9,89 +10,50 @@ reverse_compiler::reverse_compiler(ink::runtime::internal::story_impl& story, js
     : _story(story)
     , _emitter(emitter)
 {
-	_ptr = _story.instructions();
 }
 
-template<typename T>
-inline T reverse_compiler::read()
-{
-	using header = ink::internal::header;
-	// Sanity
-	if (_ptr + sizeof(T) <= _story.end()) {
-		inkAssert(_ptr + sizeof(T) <= _story.end(), "Unexpected EOF in Ink execution");
-	}
 
-	// Read memory
-	T val = *( const T* ) _ptr;
-	if (_story.get_header().endien == header::endian_types::differ) {
-		val = header::swap_bytes(val);
-	}
-
-	// Advance ip
-	_ptr += sizeof(T);
-
-	// Return
-	return val;
-}
-
-template<>
-inline const char* reverse_compiler::read()
-{
-	return read_string();
-}
-
-const char* reverse_compiler::read_string()
-{
-	offset_t str   = read<offset_t>();
-	auto     strng = _story.string(str);
-	return strng;
-}
-
-nlohmann::json reverse_compiler::read_instruction(uint8_t command_index, uint8_t command_flag)
+nlohmann::json reverse_compiler::serialize_instruction(const instruction_info& info) const
 {
 	nlohmann::json instruction;
 	using ink::Command;
 	// Determine the number of parameters based on the command type
-	const char* command_string = command_index < ( uint8_t ) Command::NUM_COMMANDS
-	                               ? CommandStrings[command_index]
-	                               : "<UNKNOWN>";
+	const char* command_string = info.command < Command::NUM_COMMANDS
+	                               ? CommandStrings[static_cast<uint8_t>(info.command)]
+	                               : "<INVALID_COMMAND>";
 	auto length_of_instructions = _story.end() - _story.instructions();
-	switch (static_cast<Command>(command_index)) {
+	switch (info.command) {
 		case Command::STR: {
-			auto strng  = read<const char*>();
-			instruction = std::string("^") + strng;
+			instruction = std::string("^") + info.get_string_param(&_story);
 		} break;
 		case Command::INT: {
-			int value   = read<int>();
-			instruction = value;
+			instruction = info.param.int_param;
 		} break;
 		case Command::BOOL: {
-			bool value  = read<int>() ? true : false;
-			instruction = value;
+			instruction = info.param.bool_param;
 			break;
 		}
 		case Command::FLOAT: {
-			float value = read<float>();
-			instruction = value;
+			instruction = info.param.float_param;
 			break;
 		}
 		case Command::VALUE_POINTER: {
 			// TODO: hash lookup
-			auto target = read<hash_t>();
+			auto target = info.param.hash_param;
 			instruction = {
 			    {"^var",			                        target},
-          {  "ci", static_cast<char>(command_flag) - 1}
+          {  "ci", static_cast<char>(info.flag) - 1}
 			};
 			break;
 		}
 		case Command::DIVERT_VAL: {
-			auto target = read<uint32_t>();
+			auto target = info.param.uint_param;
 			auto target_cmd = *(_story.instructions() + target);
 			instruction       = {{"^->", "TODO: emit a named container before this instruction: " + std::string(CommandStrings[target_cmd]) + " @ " + std::to_string(target)}};
 			break;
 		}
 		case Command::LIST: {
-			int list_index = read<hash_t>();
+			auto list_index = info.param.hash_param;
 			instruction    = "TODO: list " + std::to_string(list_index);
 		} break;
 		case Command::VOID: {
@@ -99,74 +61,74 @@ nlohmann::json reverse_compiler::read_instruction(uint8_t command_index, uint8_t
 		}; break;
 		case Command::TAG: {
 			instruction = {
-			    {'#', read<const char*>()}
+			    {'#', info.get_string_param(&_story)}
 			};
 		};
 		case Command::DIVERT: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			if (value == length_of_instructions) {
 				return nullptr;
 			}
 			instruction = {
 			    {"->", get_container_path(value)}
 			};
-			if (command_flag & ( uint8_t ) CommandFlag::DIVERT_HAS_CONDITION) {
+			if (info.flag & ( uint8_t ) CommandFlag::DIVERT_HAS_CONDITION) {
 				instruction["c"] = true;
 			}
 		} break;
 		case Command::DIVERT_TO_VARIABLE: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			auto str_value = "$r" + std::to_string(value);
 			instruction = {
 			    {"->", str_value},
 					{"var", true},
 			};
-			if (command_flag & ( uint8_t ) CommandFlag::DIVERT_HAS_CONDITION) {
+			if (info.flag & ( uint8_t ) CommandFlag::DIVERT_HAS_CONDITION) {
 				instruction["c"] = true;
 			}
 		} break;
 		case Command::TUNNEL: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			instruction = {
 			    {"->t->", get_container_path(value)}
 			};
-			if (command_flag & ( uint8_t ) CommandFlag::TUNNEL_TO_VARIABLE) {
+			if (info.flag & ( uint8_t ) CommandFlag::TUNNEL_TO_VARIABLE) {
 				instruction["var"] = true;
 			}
 		} break;
 		case Command::FUNCTION: {
 			// f()
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			// TODO: real val
 			instruction = {
 			    {"f()", value}
 			};
-			if (command_flag & ( uint8_t ) CommandFlag::FUNCTION_TO_VARIABLE) {
+			if (info.flag & ( uint8_t ) CommandFlag::FUNCTION_TO_VARIABLE) {
 				instruction["var"] = true;
 			}
 		};
 		case Command::DEFINE_TEMP: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			auto str_value = "$r" + std::to_string(value);
 			instruction = {
 			    {"temp=", str_value}
 			};
-			if (command_flag & ( uint8_t ) CommandFlag::ASSIGNMENT_IS_REDEFINE) {
+			if (info.flag & ( uint8_t ) CommandFlag::ASSIGNMENT_IS_REDEFINE) {
 				instruction["re"] = true;
 			}
 		} break;
 		case Command::SET_VARIABLE: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			// TODO: Actual variable name
 			instruction = {
 			    {"VAR=", value}
 			};
-			if (command_flag & ( uint8_t ) CommandFlag::ASSIGNMENT_IS_REDEFINE) {
+			if (info.flag & ( uint8_t ) CommandFlag::ASSIGNMENT_IS_REDEFINE) {
 				instruction["re"] = true;
 			}
 		} break;
 		case Command::PUSH_VARIABLE_VALUE: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			// TODO: Actual variable name
 
 			instruction = {
@@ -174,29 +136,24 @@ nlohmann::json reverse_compiler::read_instruction(uint8_t command_index, uint8_t
 			};
 		} break;
 		case Command::READ_COUNT: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			// TODO: Actual variable name
 			instruction = {
 			    {"CNT?", value}
 			};
 		} break;
-
-
 		case Command::CHOICE: {
-			auto value   = read<uint32_t>();
+			auto value   = info.param.uint_param;
 			instruction = {
 			    {  "*",			                        get_container_path(value)},
-          {"flg", static_cast<uint8_t>(command_flag)}
+          {"flg", static_cast<uint8_t>(info.flag)}
 			};
 
 		} break;
 		case Command::CALL_EXTERNAL: {
-			int numArgs = command_flag;
-			auto hash    = read<uint32_t>();
-			// pop off the function call
-			read<uint8_t>();
-			read<uint8_t>();
-			auto val     = read<uint32_t>();
+			int numArgs = info.flag;
+			auto hash    = info.param.uint_param;
+			auto val     = info.addtl_param;
 			// TODO: real val
 			instruction = {
 			    {   "x()",     val},
@@ -265,12 +222,10 @@ nlohmann::json reverse_compiler::read_instruction(uint8_t command_index, uint8_t
 		case Command::START_CONTAINER_MARKER: {
 			// this is supposed to be handled down below
 			printf("woopsie!");
-			// skip the value
-			read<uint32_t>();
 		}
 		default: {
 			instruction = command_string;
-			printf("Unknown command: %d\n", command_index);
+			printf("Unknown command: %d\n", info.command);
 		} break;
 	}
 
@@ -281,41 +236,39 @@ nlohmann::json reverse_compiler::read_instruction(uint8_t command_index, uint8_t
 std::vector<nlohmann::json> reverse_compiler::decompile_instructions()
 {
 	std::vector<nlohmann::json> instructions;
-	_ptr = _story.instructions();
-	while (_ptr < _story.end()) {
+	instruction_reader reader{&_story};
+	while (!reader.at_end()) {
 		container_t container_id;
 		std::vector<container_t> container_ids;
-		uint8_t command_index;
-		uint8_t command_flag = 0;
-		uint32_t indexToReturn = 0;
-		auto get_command_flag_if_start_or_end = [&]()
-		{
-			// peek at the next command
-			if (*_ptr == ( uint8_t ) Command::START_CONTAINER_MARKER || *_ptr == ( uint8_t ) Command::END_CONTAINER_MARKER) {
-				command_index = read<uint8_t>();
-				command_flag = read<uint8_t>();
-				indexToReturn = read<uint32_t>();
-				return true;
+		auto curr_pos = reader.get_pos();
+		auto inst = reader.read_instruction();
+		if (is_end_of_container(curr_pos, container_ids)) {
+			uint32_t indexToReturn = 0;
+			uint8_t command_flag = 0;
+			if (inst.command == Command::END_CONTAINER_MARKER) {
+				indexToReturn = inst.param.uint_param;
+				command_flag = inst.flag;
 			}
-			// anonymous container, consume next instruction
-			return false;
-		};
-		if (is_end_of_container(container_ids)) {
-			auto ret = get_command_flag_if_start_or_end();
 			for (int i = 0; i < container_ids.size(); i++) {
 				end_container(indexToReturn, command_flag);
 			}
-			if (ret) continue;
+			if (inst.command == Command::END_CONTAINER_MARKER) {
+				continue;
+			}
 		}
-		if (is_start_of_container(container_id)) {
-			auto ret = get_command_flag_if_start_or_end();
+		if (is_start_of_container(curr_pos, container_id)) {
+			uint32_t indexToReturn = 0;
+			uint8_t command_flag = 0;
+			if (inst.command == Command::START_CONTAINER_MARKER) {
+				indexToReturn = inst.param.uint_param;
+				command_flag = inst.flag;
+			}
 			start_container(container_id, indexToReturn, command_flag);
-			if (ret) continue;
-		} 
-		
-		command_index = read<uint8_t>();
-		command_flag = read<uint8_t>();
-		auto instruction = read_instruction(command_index, command_flag);
+			if (inst.command == Command::START_CONTAINER_MARKER) {
+				continue;
+			}
+		}
+		auto instruction = serialize_instruction(inst);
 		if (instruction != nullptr) {
 			_emitter.write_instruction(instruction);
 			instructions.push_back(instruction);
@@ -325,47 +278,38 @@ std::vector<nlohmann::json> reverse_compiler::decompile_instructions()
 	return instructions;
 }
 
-std::vector<uint32_t> reverse_compiler::read_divert_offsets()
+std::vector<uint32_t> reverse_compiler::read_divert_offsets() const
 {
 	std::vector<uint32_t> offsets;
-	_ptr = _story.instructions();
+	instruction_reader reader{&_story};
 	auto push_offset = [&](uint32_t target)
 	{
 		if (std::count(offsets.begin(), offsets.end(), target) == 0) {
 			offsets.push_back(target);
 		}
 	};
-	while (_ptr < _story.end()) {
+	while (!reader.at_end()) {
 		container_t container_id;
 		uint8_t command_index;
 		uint8_t command_flag = 0;
 		uint32_t indexToReturn = 0;
-		command_index = read<uint8_t>();
-		command_flag = read<uint8_t>();
-		switch((Command)command_index) {
+		auto inst = reader.read_instruction();
+		switch(inst.command) {
 			case Command::DIVERT: {
-				auto target = read<uint32_t>();
-				push_offset(target);
+				push_offset(inst.param.uint_param);
 			} break;
 			case Command::CHOICE: {
-				auto target = read<uint32_t>();
-				push_offset(target);
+				push_offset(inst.param.uint_param);
 			} break;
 			case Command::DIVERT_VAL: {
-				auto target = read<uint32_t>();
-		    // TODO: something with this
-			} break;
-			case Command::START_CONTAINER_MARKER:
-			case Command::END_CONTAINER_MARKER: {
-				read<uint32_t>(); // skip
+				auto target = inst.param.uint_param;
+				// TODO: something with this
 			} break;
 			// TODO: others
 			default: {
-				read_instruction(command_index, command_flag);
 			} break;
 		}
 	}
-	_ptr = _story.instructions();
 	std::sort(offsets.begin(), offsets.end());
 	return offsets;
 }
@@ -536,34 +480,42 @@ void reverse_compiler::pop_container_info()
 
 }
 
-std::string reverse_compiler::get_container_path(uint32_t offset)
+std::string reverse_compiler::get_container_path(const uint32_t offset) const
 {
 	// TODO: need to do relative/absolute paths
 	if (start_offset_container_map.find(offset) != start_offset_container_map.end()) {
-		auto id = start_offset_container_map[offset];
+		const auto id = start_offset_container_map.at(offset);
 		return "container-" + std::to_string(id);
 	}
 	return "<ANONYMOUS_CONTAINER @ OFFSET " + std::to_string(offset) + ">";
 }
 
-reverse_compiler::container_info& reverse_compiler::get_container_info(const container_t container_id)
+const reverse_compiler::container_info&
+    reverse_compiler::get_container_info(const container_t container_id) const
 {
 	return _container_info[container_id];
 }
 
-bool reverse_compiler::is_start_of_container(container_t& container_id)
+reverse_compiler::container_info& reverse_compiler::get_container_info(container_t container_id)
 {
-	if (start_offset_container_map.find(_ptr - _story.instructions()) != start_offset_container_map.end()) {
-		container_id = start_offset_container_map[_ptr - _story.instructions()];
+	return _container_info[container_id];
+}
+
+bool reverse_compiler::is_start_of_container(ip_t pos, container_t& container_id) const
+{
+	uint32_t offset = pos - _story.instructions();
+	if (start_offset_container_map.find(offset) != start_offset_container_map.end()) {
+		container_id = start_offset_container_map.at(offset);
 		return true;
 	}
 	return false;
 }
 
-bool reverse_compiler::is_end_of_container(std::vector<container_t>& container_id)
+bool reverse_compiler::is_end_of_container(ip_t pos, std::vector<container_t>& container_id) const
 {
-	if (end_offset_container_map.find(_ptr - _story.instructions()) != end_offset_container_map.end()) {
-		container_id = end_offset_container_map[_ptr - _story.instructions()];
+	uint32_t offset = pos - _story.instructions();
+	if (end_offset_container_map.find(offset) != end_offset_container_map.end()) {
+		container_id = end_offset_container_map.at(offset);
 		return true;
 	}
 	return false;
