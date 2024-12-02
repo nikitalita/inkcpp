@@ -1,5 +1,6 @@
 #include "decompiler.h"
 #include "args.h"
+#include <filesystem>
 int main(int argc, char* argv[]) {
 	// reverse("test.bin", "test.json");
 	args::ArgumentParser parser("InkBIN string modifier", "This goes after the options.");
@@ -37,6 +38,11 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	auto bin_str = bin_file.Get();
+	// check for bin_file's existence
+	if (!std::filesystem::exists(bin_str)) {
+		std::cerr << "File does not exist: " << bin_str << std::endl;
+		return 1;
+	}
 	std::string out_str;
 	if (!out_file) {
 		if (dump) {
@@ -48,11 +54,23 @@ int main(int argc, char* argv[]) {
 		out_str = out_file.Get();
 	}
 
-	if (dump) {
-		ink::decompiler::write_string_table_json(bin_str.c_str(), out_str.c_str());
-	} else if (replace_with) {
-		auto input_str = replace_with.Get();
-		ink::decompiler::modify_string_table(bin_str.c_str(), input_str.c_str(), out_str.c_str());
+	try {
+		if (dump) {
+			ink::decompiler::write_string_table_json(bin_str.c_str(), out_str.c_str());
+		} else if (replace_with) {
+			auto input_str = replace_with.Get();
+			// check for input_str's existence
+			if (!std::filesystem::exists(input_str)) {
+				std::cerr << "File does not exist: " << input_str << std::endl;
+				return 1;
+			}
+			ink::decompiler::modify_string_table(bin_str.c_str(), input_str.c_str(), out_str.c_str());
+		}
+		// just print out whatever exception it is
+	} catch (std::exception& e) {
+		std::cerr << "FATAL ERROR: ";
+		std::cerr << e.what() << std::endl;
+		return 1;
 	}
 }
 
