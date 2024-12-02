@@ -137,19 +137,20 @@ namespace decompiler
 
 		// copy the rest of the data between the end of the string table and the beginning of the
 		// instruction data
-		auto restStart = ( unsigned char* ) _list_meta;
+		auto restStart = _list_meta;
 		if (restStart == nullptr) {
 			// _list_meta is undefined, we have to manually push back a null_flag and _num_containers and
 			// set start to _container_list
-			auto nul_flag = null_flag;
-			buffer.write(reinterpret_cast<const char*>(&nul_flag), sizeof(null_flag));
-			auto num_containers = _num_containers;
-			buffer.write(reinterpret_cast<const char*>(&num_containers), sizeof(uint32_t));
-			restStart = ( unsigned char* ) _container_list;
+			// auto nul_flag = null_flag;
+			// buffer.write(reinterpret_cast<const char*>(&nul_flag), sizeof(null_flag));
+			// auto num_containers = _num_containers;
+			// buffer.write(reinterpret_cast<const char*>(&num_containers), sizeof(uint32_t));
+			// restStart = ( unsigned char* ) _container_list;
+			// just set it to the _string_table + _string_table_size
+			restStart = _string_table + _string_table_size;
 		}
-		auto instStart = ( unsigned char* ) _instruction_data;
-		buffer.write(reinterpret_cast<const char*>(restStart), instStart - restStart);
-		// auto beforeInstructions = buffer.tellp();
+		auto instStart = reinterpret_cast<const char*>(_instruction_data);
+		buffer.write(restStart, instStart - restStart);
 
 		instruction_reader reader(
 		   _header.ink_bin_version_number, _instruction_data, end(), ( const char* ) new_table.data(), _header.endien
