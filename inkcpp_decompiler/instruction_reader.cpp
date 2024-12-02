@@ -147,7 +147,7 @@ namespace decompiler
 			case Command::FUNCTION_RETURN: {
 			} break;
 			default: {
-				printf("Unknown command: %u\n", instruction.command);
+				printf("Unknown command: %u\n", static_cast<uint8_t>(instruction.command));
 			} break;
 		}
 		return instruction;
@@ -261,7 +261,7 @@ namespace decompiler
         case Command::FUNCTION_RETURN: {
         } break;
         default: {
-            printf("Unknown command: %u\n", instruction.command);
+					printf("Unknown command: %u\n", static_cast<uint8_t>(instruction.command));
         } break;
     }
 }

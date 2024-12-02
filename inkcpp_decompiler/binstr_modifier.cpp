@@ -4,6 +4,8 @@
 #include "instruction_reader.h"
 
 #include <fstream>
+#include <vector>
+
 #include <version.h>
 
 namespace ink

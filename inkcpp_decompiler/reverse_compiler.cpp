@@ -225,7 +225,7 @@ nlohmann::json reverse_compiler::serialize_instruction(const instruction_info& i
 		}
 		default: {
 			instruction = command_string;
-			printf("Unknown command: %d\n", info.command);
+			printf("Unknown command: %u\n", static_cast<uint8_t>(info.command));
 		} break;
 	}
 
