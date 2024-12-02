@@ -17994,6 +17994,14 @@ class serializer
               const unsigned int indent_step,
               const unsigned int current_indent = 0)
     {
+#ifdef JSON_COMMENTS
+    		if (val.m_comment != "") {
+    			o->write_characters("// ", 3);
+    			o->write_characters(val.m_comment.c_str(), val.m_comment.size());
+    			o->write_character('\n');
+    			o->write_characters(indent_string.c_str(), current_indent);
+    		}
+#endif
         switch (val.m_type)
         {
             case value_t::object:
@@ -20061,6 +20069,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
         JSON_ASSERT(m_type == val.type());
+#ifdef JSON_COMMENTS
+				m_comment = val.m_comment;
+#endif
         set_parents();
         assert_invariant();
     }
@@ -20370,6 +20381,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             default:
                 break;
         }
+#ifdef JSON_COMMENTS
+    	  m_comment = other.m_comment;
+#endif
 
         set_parents();
         assert_invariant();
@@ -20387,6 +20401,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // invalidate payload
         other.m_type = value_t::null;
         other.m_value = {};
+
+#ifdef JSON_COMMENTS
+    		m_comment = std::move(other.m_comment);
+    		other.m_comment = {};
+#endif
 
         set_parents();
         assert_invariant();
@@ -20407,6 +20426,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         using std::swap;
         swap(m_type, other.m_type);
         swap(m_value, other.m_value);
+
+#ifdef JSON_COMMENTS
+				swap(m_comment, other.m_comment);
+#endif
 
         set_parents();
         assert_invariant();
@@ -23363,7 +23386,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// the value of the current element
     json_value m_value = {};
-
+#ifdef JSON_COMMENTS
+		string_t m_comment;
+#endif
 #if JSON_DIAGNOSTICS
     /// a pointer to a parent value (for debugging purposes)
     basic_json* m_parent = nullptr;
@@ -23377,6 +23402,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @{
 
   public:
+#ifdef JSON_COMMENTS
+		void set_comment(const string_t &s)
+		{
+			m_comment = s;
+		}
+#endif
+	
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
     static std::vector<std::uint8_t> to_cbor(const basic_json& j)

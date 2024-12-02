@@ -21,35 +21,32 @@ void json_emitter::finish()
 	_output << _json.dump(4, ' ', false, nlohmann::detail::error_handler_t::replace) << std::endl;
 }
 
-void json_emitter::write_string(const std::string& str) { get_back()->push_back(str); }
-
-void json_emitter::write_list(const std::vector<std::string>& list)
-{
-	get_back()->push_back(list);
-}
 
 void json_emitter::write_listDefs(const nlohmann::json& list) { _json["listDefs"] = list; }
 
-nlohmann::json* json_emitter::get_back()
+nlohmann::json* json_emitter::get_back_container()
 {
 	if (_container_stack.empty()) {
+		printf("WARNING: Empty container stack!\n");
 		return &_json["root"];
 	}
 	return _container_stack.back();
 }
 
-void json_emitter::write_instruction(const nlohmann::json& instruction)
+void json_emitter::write_instruction(nlohmann::json& instruction, const std::string& comment)
 {
-	get_back()->push_back(instruction);
+#ifdef JSON_COMMENTS
+	instruction.set_comment(comment);
+#endif
+	get_back_container()->push_back(instruction);
 }
 
-void json_emitter::write_container(const nlohmann::json& container)
+uint32_t json_emitter::start_container(const std::string& name, const std::string& comment)
 {
-	get_back()->push_back(container);
-}
-
-uint32_t json_emitter::start_container(const std::string& name){
 	auto container = nlohmann::json::array();
+#ifdef JSON_COMMENTS
+	container.set_comment(comment);
+#endif
 	if (!name.empty()) {
 		const nlohmann::json pushb = {{name, container}};
 		if (_container_stack.back()->is_object()) {
@@ -57,7 +54,8 @@ uint32_t json_emitter::start_container(const std::string& name){
 			_container_stack.push_back(&(*_container_stack.back())[name]);
 		} else {
 				_container_stack.back()->push_back({{name, container}});
-				_container_stack.push_back(&_container_stack.back()->back()[name]);
+			  auto cntr_ptr = &_container_stack.back()->back()[name];
+				_container_stack.push_back(cntr_ptr);
 		}
 	} else {
 		_container_stack.back()->push_back(container);

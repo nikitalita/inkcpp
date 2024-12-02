@@ -270,7 +270,7 @@ std::vector<nlohmann::json> reverse_compiler::decompile_instructions()
 		}
 		auto instruction = serialize_instruction(inst);
 		if (instruction != nullptr) {
-			_emitter.write_instruction(instruction);
+			_emitter.write_instruction(instruction, get_comment_for_instruction(inst));
 			instructions.push_back(instruction);
 		}
 	}
@@ -320,7 +320,12 @@ void reverse_compiler::start_container(container_t container_id, uint32_t indexT
 	auto name = _container_info[container_id].named ? "container-" + std::to_string(container_id) : "";
 	container_stack.push_back(container_id);
 	_curr_container_id = container_id;
-	_curr_container_level = _emitter.start_container(name);
+	std::string comment =
+		"Container " + std::to_string(container_id) +
+			", offset: " + std::to_string(_container_info[container_id].startOffset) +
+				", endOffset: " + std::to_string(_container_info[container_id].endOffset) +
+					", real: " + std::to_string(_container_info[container_id].real);
+	_curr_container_level = _emitter.start_container(name, comment);
 }
 
 void reverse_compiler::end_container(uint32_t indexToReturn, uint32_t flags)
@@ -488,6 +493,74 @@ std::string reverse_compiler::get_container_path(const uint32_t offset) const
 		return "container-" + std::to_string(id);
 	}
 	return "<ANONYMOUS_CONTAINER @ OFFSET " + std::to_string(offset) + ">";
+}
+
+std::string reverse_compiler::get_comment_for_instruction(const instruction_info& inst) const
+{
+	std::string comment = "offset: " + std::to_string(inst.offset);
+	// We're only doing the ones that actually have params
+	switch(inst.command) {
+		case Command::STR: {
+			comment += " STR: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::INT: {
+			comment += " INT: " + std::to_string(inst.param.int_param);
+		} break;
+		case Command::BOOL: {
+			comment += " BOOL: " + std::to_string(inst.param.bool_param);
+		} break;
+		case Command::FLOAT: {
+			comment += " FLOAT: " + std::to_string(inst.param.float_param);
+		} break;
+		case Command::VALUE_POINTER: {
+			comment += " VALUE_POINTER: " + std::to_string(inst.param.hash_param);
+		} break;
+		case Command::DIVERT_VAL: {
+			comment += " DIVERT_VAL: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::LIST: {
+			comment += " LIST: " + std::to_string(inst.param.hash_param);
+		} break;
+		case Command::VOID: {
+			comment += " VOID";
+		} break;
+		case Command::TAG: {
+			comment += std::string(" TAG: ") + inst.get_string_param(&_story);
+		} break;
+		case Command::DIVERT: {
+			comment += " DIVERT: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::DIVERT_TO_VARIABLE: {
+			comment += " DIVERT_TO_VARIABLE: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::TUNNEL: {
+			comment += " TUNNEL: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::FUNCTION: {
+			comment += " FUNCTION: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::DEFINE_TEMP: {
+			comment += " DEFINE_TEMP: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::SET_VARIABLE: {
+			comment += " SET_VARIABLE: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::PUSH_VARIABLE_VALUE: {
+			comment += " PUSH_VARIABLE_VALUE: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::READ_COUNT: {
+			comment += " READ_COUNT: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::CHOICE: {
+			comment += " CHOICE: " + std::to_string(inst.param.uint_param);
+		} break;
+		case Command::CALL_EXTERNAL: {
+			comment += " CALL_EXTERNAL: " + std::to_string(inst.param.uint_param);
+		} break;
+		default:
+			break;
+	}
+	return comment;
 }
 
 const reverse_compiler::container_info&

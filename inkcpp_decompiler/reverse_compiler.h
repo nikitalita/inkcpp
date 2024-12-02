@@ -49,6 +49,8 @@ private:
 
 	std::string get_container_path(const uint32_t offset) const;
 
+	std::string get_comment_for_instruction(const instruction_info& inst) const;
+	
 	const container_info& get_container_info(const container_t container_id) const;
 
 	container_info& get_container_info(container_t container_id);

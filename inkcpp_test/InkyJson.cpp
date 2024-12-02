@@ -33,7 +33,7 @@ SCENARIO("run inklecate 1.1.1 story")
 		// 	thread->choose(CHOICE);
 		// 	REQUIRE(thread->getall() == OUTPUT_PART_2);
 		// }
-		auto new_output_file = std::string(INK_TEST_RESOURCE_DIR "simple-1.1.1-") + compiler + "-reversed.json";
+		auto new_output_file = std::string(INK_TEST_RESOURCE_DIR "simple-1.1.1-") + compiler + "-reversed.jsonc";
 		ink::decompiler::reverse(output_file.c_str(), new_output_file.c_str());
 		THEN("Woop!")
 		{
