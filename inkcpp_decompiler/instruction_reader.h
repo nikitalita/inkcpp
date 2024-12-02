@@ -140,6 +140,8 @@ namespace decompiler
 		} param = {0};
 
 		uint32_t    addtl_param = 0;
+		const char* get_string_param(const char * string_table) const;
+
 		const char* get_string_param(runtime::internal::story_impl* story) const;
 	};
 

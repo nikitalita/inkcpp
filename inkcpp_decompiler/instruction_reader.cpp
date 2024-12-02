@@ -8,6 +8,11 @@ namespace ink
 {
 namespace decompiler
 {
+	const char* instruction_info::get_string_param(const char* string_table) const
+	{
+		return string_table + param.uint_param;
+	}
+
 	const char* instruction_info::get_string_param(runtime::internal::story_impl* story) const
 	{
 		return story->string(param.uint_param);
