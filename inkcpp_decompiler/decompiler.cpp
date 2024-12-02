@@ -45,7 +45,7 @@ void write_string_table_json(const char* binfileIn, const char* jsonfileOut)
 	if (!in) {
 		throw std::invalid_argument(std::string(binfileIn) + " does not exist.");
 	}
-	std::ofstream out(jsonfileOut);
+	std::ofstream out(jsonfileOut, std::ios::out | std::ios::trunc);
 	if (!out) {
 		throw std::invalid_argument(std::string(jsonfileOut) + " cannot be created.");
 	}
@@ -86,7 +86,7 @@ void modify_string_table(const char* binfileIn, const char* jsonfileIn, const ch
 	if (!jsonIn) {
 		throw std::invalid_argument(std::string(jsonfileIn) + " does not exist.");
 	}
-	std::ofstream binOut(binfileOut);
+	std::ofstream binOut(binfileOut, std::ios::binary | std::ios::out | std::ios::trunc);
 	if (!binOut) {
 		throw std::invalid_argument(std::string(binfileOut) + " cannot be created.");
 	}
