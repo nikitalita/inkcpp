@@ -37,7 +37,7 @@ namespace ink::internal {
 		}
 
 		if (res.ink_bin_version_number != InkBinVersion) {
-			inkFail("InkCpp-version mismatch: file was compiled with different InkCpp-version!");
+			// inkFail("InkCpp-version mismatch: file was compiled with different InkCpp-version!");
 		}
 		return res;
 	}

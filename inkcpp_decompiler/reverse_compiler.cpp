@@ -152,6 +152,7 @@ nlohmann::json reverse_compiler::serialize_instruction(const instruction_info& i
 		} break;
 		case Command::CALL_EXTERNAL: {
 			int numArgs = info.flag;
+			// TODO: handle binVersion 0, there's no following function call in that version
 			auto hash    = info.param.uint_param;
 			auto val     = info.addtl_param;
 			// TODO: real val

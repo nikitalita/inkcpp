@@ -152,7 +152,7 @@ namespace decompiler
 		// auto beforeInstructions = buffer.tellp();
 
 		instruction_reader reader(
-		    _instruction_data, end(), ( const char* ) new_table.data(), _header.endien
+		   _header.ink_bin_version_number, _instruction_data, end(), ( const char* ) new_table.data(), _header.endien
 		);
 		while (!reader.at_end()) {
 			auto inst = reader.read_instruction();
@@ -169,7 +169,7 @@ namespace decompiler
 				} break;
 				default: break;
 			}
-			instruction_reader::write_instruction(inst, buffer);
+			instruction_reader::write_instruction(_header.ink_bin_version_number, inst, buffer);
 		}
 		// auto afterInstructions = buffer.tellp();
 		// return the size of the new file
@@ -240,8 +240,8 @@ namespace decompiler
 			_lists     = nullptr;
 		}
 		inkAssert(
-		    _header.ink_bin_version_number == ink::InkBinVersion,
-		    "invalid InkBinVerison! currently: %i you used %i", ink::InkBinVersion,
+		    _header.ink_bin_version_number <= ink::InkBinVersion,
+		    "newer InkBinVerison! currently: %i you used %i", ink::InkBinVersion,
 		    _header.ink_bin_version_number
 		);
 		inkAssert(
