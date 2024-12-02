@@ -15,5 +15,11 @@ namespace decompiler
 {
 	void reverse(const char* filenameIn, const char* filenameOut);
 	void reverse(std::istream& in, std::ostream& out);
+
+	void write_string_table_json(const char *binfileIn, const char *jsonfileOut);
+	void write_string_table_json(std::istream& binIn, std::ostream& jsonOut);
+
+	void modify_string_table(const char* binfileIn, const char* jsonfileIn, const char* binfileOut);
+	void modify_string_table(std::istream& binIn, std::istream& jsonIn, std::ostream& binOut);
 } // namespace decompiler
 } // namespace ink

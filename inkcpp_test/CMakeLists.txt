@@ -20,9 +20,10 @@ add_executable(inkcpp_test catch.hpp Main.cpp
   LookaheadSafe.cpp
   EmptyStringForDivert.cpp
   MoveTo.cpp
+  BinStringModifier.cpp
 )
 
-target_link_libraries(inkcpp_test PUBLIC inkcpp inkcpp_compiler inkcpp_shared inkcpp_decompiler)
+target_link_libraries(inkcpp_test PUBLIC inkcpp inkcpp_compiler inkcpp_shared inkcpp_decompiler_lib)
 target_include_directories(inkcpp_test PRIVATE ../shared/private/)
 
 # For https://en.cppreference.com/w/cpp/filesystem#Notes

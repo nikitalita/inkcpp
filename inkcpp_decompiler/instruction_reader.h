@@ -17,7 +17,7 @@ namespace decompiler
 {
 	struct instruction_info {
 		uint32_t offset  = 0;
-		Command  command = Command::VOID;
+		Command  command = Command::NUM_COMMANDS;
 		uint8_t  flag    = 0;
 
 		union param_t {
@@ -51,6 +51,7 @@ namespace decompiler
 		         );
 
 		instruction_info read_instruction();
+		static void write_instruction(const instruction_info& instruction, std::ostream& os);
 		bool             at_end() const;
 		ip_t             get_pos() const;
 	};

@@ -78,13 +78,18 @@ if (NOT WHEEL_BUILD)
 endif(NOT WHEEL_BUILD)
 
 
-install(TARGETS inkcpp inkcpp_shared inkcpp_compiler inkcpp_decompiler
+install(TARGETS inkcpp inkcpp_shared inkcpp_compiler inkcpp_decompiler_lib
 	EXPORT inkcppTarget
 	ARCHIVE DESTINATION "lib/ink"
 	COMPONENT lib EXCLUDE_FROM_ALL
 	PUBLIC_HEADER DESTINATION "include/ink"
 	COMPONENT lib EXCLUDE_FROM_ALL
 )
+
+install(TARGETS inkcpp_decompiler
+	RUNTIME DESTINATION "bin"
+	COMPONENT bin EXCLUDE_FROM_ALL)
+
 
 install(EXPORT inkcppTarget
 	FILE inkcppTargets.cmake DESTINATION "lib/cmake/inkcpp"

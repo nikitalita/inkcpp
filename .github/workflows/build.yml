@@ -102,6 +102,17 @@ jobs:
         name: ${{ matrix.artifact }}-lib
         path: build/comp_lib/
 
+    - name: Install Bin
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      run: cmake --install . --config $BUILD_TYPE --prefix comp_bin --component bin
+    - name: Upload Bin
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact }}-bin
+        path: build/comp_bin/
+
+
     - name: Install CLib
       working-directory: ${{github.workspace}}/build
       shell: bash
