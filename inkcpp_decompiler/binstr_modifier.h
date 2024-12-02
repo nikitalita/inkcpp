@@ -26,6 +26,8 @@ public:
 	size_t                          modify_string_table(
 		                           const std::map<std::string, std::string>& orig_to_replace, std::ostream& buffer
 		                       ) const;
+	void print_instructions();
+
 	inline const ip_t end() const { return _file + _length; }
 private:
 	void setup_pointers();

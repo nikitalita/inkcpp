@@ -4,6 +4,7 @@
 #include "instruction_reader.h"
 
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 #include <version.h>
@@ -165,7 +166,7 @@ namespace decompiler
 						inst.param.uint_param = it->second;
 					} else {
 						// this shouldn't happen, throw
-						throw ink_exception("offset not found in offset_map");
+						throw ink_exception(std::string("STR command with offset ") + std::to_string(offset) + " not found in offset_map, please report this!");
 					}
 				} break;
 				default: break;
@@ -175,6 +176,26 @@ namespace decompiler
 		// auto afterInstructions = buffer.tellp();
 		// return the size of the new file
 		return buffer.tellp() - startPos;
+	}
+	void binstr_modifier::print_instructions()
+	{
+		auto reader = instruction_reader(_header.ink_bin_version_number, _instruction_data, end(), _string_table, _header.endien);
+		while (!reader.at_end()) {
+			auto inst = reader.read_instruction();
+			auto cmd_string = inst.command != Command::NEWLINE ? CommandStrings[(uint8_t)inst.command] : "NEWLINE";
+			std::cout << cmd_string << ", flags: " << (int)inst.flag;
+			std::cout << ", param: " << inst.param.uint_param;
+			if (inst.command == Command::STR || inst.command == Command::TAG) {
+				const char* str;
+				if (inst.param.uint_param > _string_table_size) {
+					str = "***WARNING: Out of bounds string!";
+				} else {
+					str = _string_table + inst.param.uint_param;
+				}
+				std::cout << " ('" << str << "')";
+			}
+			std::cout << std::endl;
+		}
 	}
 
 	void binstr_modifier::setup_pointers()
