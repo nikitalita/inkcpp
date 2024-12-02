@@ -86,7 +86,7 @@ install(TARGETS inkcpp inkcpp_shared inkcpp_compiler inkcpp_decompiler_lib
 	COMPONENT lib EXCLUDE_FROM_ALL
 )
 
-install(TARGETS inkcpp_decompiler
+install(TARGETS inkcpp_bineditor
 	RUNTIME DESTINATION "bin"
 	COMPONENT bin EXCLUDE_FROM_ALL)
 

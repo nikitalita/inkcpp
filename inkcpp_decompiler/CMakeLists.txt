@@ -29,7 +29,7 @@ add_library(inkcpp_decompiler_o OBJECT ${SOURCES} ${HEADERS})
 add_library(inkcpp_decompiler_lib $<TARGET_OBJECTS:inkcpp_decompiler_o>)
 set_target_properties(inkcpp_decompiler_lib PROPERTIES OUTPUT_NAME inkcpp_decompiler)
 
-add_executable(inkcpp_decompiler main.cpp $<TARGET_OBJECTS:inkcpp_decompiler_o>)
+add_executable(inkcpp_bineditor main.cpp $<TARGET_OBJECTS:inkcpp_decompiler_o>)
 
 target_include_directories(inkcpp_decompiler_o PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -60,7 +60,7 @@ target_include_directories(
 )
 
 target_include_directories( 
-	inkcpp_decompiler
+	inkcpp_bineditor
 	PRIVATE
 	${CMAKE_SOURCE_DIR}/inkcpp
 	${CMAKE_SOURCE_DIR}/inkcpp_compiler
@@ -76,10 +76,10 @@ set_target_properties(inkcpp_decompiler_lib PROPERTIES PUBLIC_HEADER "${PUBLIC_H
 # Make sure this project and all dependencies use the C++17 standard
 target_compile_features(inkcpp_decompiler_o PUBLIC cxx_std_17)
 target_compile_features(inkcpp_decompiler_lib PUBLIC cxx_std_17)
-target_compile_features(inkcpp_decompiler PUBLIC cxx_std_17)
+target_compile_features(inkcpp_bineditor PUBLIC cxx_std_17)
 
 message(INFO "${CMAKE_SOURCE_DIR}")
 # Link to inkcpp
 target_link_libraries(inkcpp_decompiler_o PRIVATE inkcpp_shared inkcpp inkcpp_compiler)
 target_link_libraries(inkcpp_decompiler_lib PRIVATE inkcpp_shared inkcpp inkcpp_compiler)
-target_link_libraries(inkcpp_decompiler PRIVATE inkcpp_decompiler_lib inkcpp_shared inkcpp inkcpp_compiler)
+target_link_libraries(inkcpp_bineditor PRIVATE inkcpp_decompiler_lib inkcpp_shared inkcpp inkcpp_compiler)
