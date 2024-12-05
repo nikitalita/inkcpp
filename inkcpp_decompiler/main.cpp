@@ -3,11 +3,14 @@
 #include <filesystem>
 int main(int argc, char* argv[]) {
 	// reverse("test.bin", "test.json");
-	args::ArgumentParser parser("InkBIN string modifier", "This goes after the options.");
+	std::string exe_name = std::filesystem::path(argv[0]).filename().string();
+	args::ArgumentParser parser("InkBIN string modifier", "\n\tUsage:\n\t\t"
+		+ exe_name + " --dump <INPUT_BIN> <OUTPUT_STRING_TABLE_JSON>\n\t\t"+
+		exe_name + " --replace=<INPUT_JSON> <INPUT_BIN> <OUTPUT_BIN>");
 	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 	args::Group group(parser, "Main commands:", args::Group::Validators::Xor);
 	args::Flag dump(group, "dump", "Dump string table to json file", {'d', "dump"});
-	args::ValueFlag<std::string> replace_with(group, "replace-with", "Replace string table using json file", {"replace-with"});
+	args::ValueFlag<std::string> replace_with(group, "replace", "Replace string table using json file", {"replace"});
 	// Positional argument for bin file
 	args::Positional<std::string> bin_file(parser, "binfile", "The binary file to modify");
 	args::Positional<std::string> out_file(parser, "outfile", "The output file to write to");
@@ -57,6 +60,9 @@ int main(int argc, char* argv[]) {
 	try {
 		if (dump) {
 			ink::decompiler::write_string_table_json(bin_str.c_str(), out_str.c_str());
+			printf("Wrote string table to %s\n", out_str.c_str());
+			printf("JSON file is formatted as '\"<original string>\": \"<destination string>\"'\n");
+			printf("Modify the destination strings (i.e. the strings after the ':'),\nand then use --replace to replace the string table\n");
 		} else if (replace_with) {
 			auto input_str = replace_with.Get();
 			// check for input_str's existence
